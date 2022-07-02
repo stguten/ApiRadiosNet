@@ -11,9 +11,9 @@ async function pegarRadioRepository(radioId){
             "status_nome as status "+
             "FROM radios "+
             "JOIN status ON radios.status = status.id "+
-            "WHERE radios.id= ?", [id], (err, row)=>{
+            "WHERE radios.id = ?", [id], (err, row)=>{
                 if(err) throw err;
-                if(row === undefined) resolve(false);
+                if(row == undefined) resolve(false);
                 resolve(row);
             }
         )

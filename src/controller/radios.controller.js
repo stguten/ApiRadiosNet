@@ -4,22 +4,22 @@ import { inserirRadioRepository, pegarRadioRepository, todasAsRadiosRepository }
 
 const pegarRadioController = async (req,res)=>{
     const {id} = req.query;
-    if(isNaN(id)) {res.send(400).send("Requisição Invalida")};
-    try{
-        const result = pegarRadioRepository(id);
-        if(!result) {
-            res.send(404).send("Radio não encontrada");
+    if(isNaN(id)) {res.send(400).send("Requisição Invalida"); return;};
+
+    await pegarRadioRepository(id)
+    .then(radio =>{
+        if(!radio){
+            res.status(404).send("Radio não encontrada");
             return;
         }
-        res.status(200).send(result);
-
-    }catch(e){
+        res.status(200).send(radio);
+    })
+    .catch(e =>{
         res.status(500).send(e);
-    }
+    })
 }
 
-const todasAsRadiosController = async (req,res)=>{
-    
+const todasAsRadiosController = async (req,res)=>{    
     await todasAsRadiosRepository()
     .then(radios =>{
         if(!radios){
