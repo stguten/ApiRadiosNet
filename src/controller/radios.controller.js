@@ -37,7 +37,7 @@ const todasAsRadiosController = async (req,res)=>{
 const inserirRadioController = async (id) =>{
     await instance.get(`https://www.radios.com.br/play/${id}`)
         .then(async result =>{
-            if(result.request.res.responseUrl.indexOf("/error/") > 0) return;
+            if(result.request.res.responseUrl.indexOf("/error/") > 0) throw new Error('Radio não encontrada.');
             const $ = parsing(result.data);
             switch($("#status-radio > span > b").text().replace(":","")){
                 case 'Arquivada':
