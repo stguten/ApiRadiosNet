@@ -1,22 +1,23 @@
 {
   "name": "apiradionet",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.3",
+  "description": "Sistema simples para baixar e salvar as rádios do RadiosNet(radios.com.br)",
   "main": "run.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node -r dotenv/config run.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Gutemberg (a.k.a StGuten)",
+  "license": "MIT",
   "dependencies": {
     "axios": "^0.27.2",
     "cheerio": "^1.0.0-rc.11",
     "cors": "^2.8.5",
-    "cron": "^2.0.0",
     "express": "^4.18.1",
     "helmet": "^5.1.0",
-    "sqlite3": "^5.0.8"
+    "node-cron": "^3.0.1",
+    "sqlite3": "^5.0.8",
+    "uuid": "^8.3.2"
   }
 }

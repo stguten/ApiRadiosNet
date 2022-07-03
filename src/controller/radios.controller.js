@@ -1,3 +1,4 @@
+import radiosCron from "../../cron/radios.cron.js";
 import instance from "../config/axios.config.js";
 import parsing from "../config/cheerio.config.js";
 import { inserirRadioRepository, pegarRadioRepository, todasAsRadiosRepository } from "../repository/radios.repository.js";
@@ -65,4 +66,13 @@ const inserirRadioController = async (id) =>{
 const updateRadioController = async (req, res) =>{
 
 }
-export {pegarRadioController,todasAsRadiosController, inserirRadioController, updateRadioController}
+
+const atualizacaoManual = async(req,res)=>{
+    const {pass} = req.body;
+
+    if(pass == 'apiradiosnetsupadupa'){
+        radiosCron();
+        res.status(200).send("Atulização manual iniciada")
+    }
+}
+export {pegarRadioController,todasAsRadiosController, inserirRadioController, updateRadioController,atualizacaoManual}
