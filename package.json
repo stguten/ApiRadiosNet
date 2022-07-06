@@ -1,6 +1,6 @@
 {
   "name": "apiradionet",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Sistema simples para baixar e salvar as rádios do RadiosNet(radios.com.br)",
   "main": "run.js",
   "type": "module",
@@ -14,6 +14,7 @@
     "axios": "^0.27.2",
     "cheerio": "^1.0.0-rc.11",
     "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "helmet": "^5.1.0",
     "node-cron": "^3.0.1",

@@ -70,9 +70,10 @@ const updateRadioController = async (req, res) =>{
 const atualizacaoManual = async(req,res)=>{
     const {pass} = req.body;
 
-    if(pass == 'apiradiosnetsupadupa'){
+    if(pass == process.env.SENHA_MANUAL){
         radiosCron();
         res.status(200).send("Atulização manual iniciada")
     }
 }
+
 export {pegarRadioController,todasAsRadiosController, inserirRadioController, updateRadioController,atualizacaoManual}

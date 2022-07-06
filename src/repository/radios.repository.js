@@ -5,8 +5,7 @@ async function pegarRadioRepository(radioId){
     return new Promise((resolve, reject) =>{
         database.get("SELECT DISTINCT "+
             "nome, "+
-            "trim(substr(local,0,instr(local,'/'))) as municipio, "+
-            "trim(substr(local,instr(local,'/')+1)) as estadoPais, "+
+            "local, "+
             "link, "+
             "status_nome as status "+
             "FROM radios "+
@@ -24,8 +23,7 @@ async function todasAsRadiosRepository(){
     return new Promise((resolve, reject) =>{
         database.all("SELECT DISTINCT "+
             "nome, "+
-            "trim(substr(local,0,instr(local,'/'))) as municipio, "+
-            "trim(substr(local,instr(local,'/')+1)) as estadoPais, "+
+            "local, "+
             "link, "+
             "status_nome as status "+
             "FROM radios "+
