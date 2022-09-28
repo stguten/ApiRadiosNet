@@ -1,52 +1,41 @@
-import database from "../config/sqlite.config.js";
+import pool from "../config/pg.config.js";
 
-async function pegarRadioRepository(radioId){
-    const id = parseInt(radioId);
-    return new Promise((resolve, reject) =>{
-        database.get("SELECT DISTINCT "+
-            "nome, "+
-            "local, "+
-            "link, "+
-            "status_nome as status "+
-            "FROM radios "+
-            "JOIN status ON radios.status = status.id "+
-            "WHERE radios.id = ?", [id], (err, row)=>{
-                if(err) throw err;
-                if(row == undefined) resolve(false);
-                resolve(row);
-            }
-        )
-    })
+async function pegarRadioComFitroRepository(parametros){
+    const {nome, cidade, estado, pais} = parametros;
+     try{
+        const resultado = pool.query(`SELECT nome, cidade, estado, regiao, pais, url, segmentos FROM pandora_radio.radios WHERE 1=1 
+        ${nome != undefined ? `and nome ILIKE '%${nome}%' `: ``} 
+        ${cidade != undefined ? `and cidade ILIKE '%${cidade}%' ` : ``} 
+        ${estado != undefined ? `and estado ILIKE '%${estado}%' ` : ``} 
+        ${pais != undefined ? `and pais ILIKE '%${pais}%' ` : ``} `);
+        return resultado;
+    }catch(e){
+        return e;
+    } 
 }
 
 async function todasAsRadiosRepository(){
-    return new Promise((resolve, reject) =>{
-        database.all("SELECT DISTINCT "+
-            "nome, "+
-            "local, "+
-            "link, "+
-            "status_nome as status "+
-            "FROM radios "+
-            "JOIN status ON radios.status = status.id", (err, row)=>{
-                if(err) throw err;
-                if(row === undefined) resolve(false);
-                resolve(row);
-            }
-        )
-    })    
+    try{
+        const resultado = pool.query('SELECT nome, url, cidade, estado, regiao, pais, segmentos FROM pandora_radio.radios');
+        return resultado;
+    }catch(e){
+        return e;
+    }
 }
 
-async function inserirRadioRepository(data){
-    database.serialize(()=>{
-        try{
-            database.run("BEGIN");
-            database.run("INSERT OR IGNORE INTO radios(id,nome,local,link,status) VALUES (?,?,?,?,?)", data);
-            database.run("COMMIT");
-        }catch(e){
-            database.run("ROLLBACK");
-            console.log(e);
-        }
-    })
+async function inserirRadioRepository(dados){
+    const {radio, segmentos, cidade, estado, regiao, pais, url,status} = dados;
+    const client = await pool.connect();
+    try{
+        await client.query('BEGIN');
+        await client.query(`INSERT INTO pandora_radio.radios(nome, cidade, estado, regiao, pais, url, segmentos,status) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [radio, cidade, estado, regiao, pais, url, segmentos,status]);
+        await client.query('COMMIT');
+        client.release();
+    }catch(e){
+        console.log(e);
+        client.query('ROLLBACK');
+    }
 }
 
-export {pegarRadioRepository, todasAsRadiosRepository, inserirRadioRepository}
+export {pegarRadioComFitroRepository, todasAsRadiosRepository, inserirRadioRepository}
