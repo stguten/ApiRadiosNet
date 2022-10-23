@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apiradiosnet
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: apiradiosnet
+  template:
+    metadata:
+      labels:
+        app: apiradiosnet
+    spec:
+      containers:
+      - name: apiradiosnet     
+        image: stgutem/apiradiosnet
+        imagePullPolicy: "Always"
+        env:
+        - name: PG_HOST
+          valueFrom:
+            secretKeyRef:
+              name: pandoraenvs
+              key: PG_HOST
+        - name: PG_DB
+          valueFrom:
+            secretKeyRef:
+              name: pandoraenvs
+              key: PG_DB
+        - name: PG_USER
+          valueFrom:
+            secretKeyRef:
+              name: pandoraenvs
+              key: PG_USER
+        - name: PG_PASS
+          valueFrom:
+            secretKeyRef:
+              name: pandoraenvs
+              key: PG_PASS
+        - name: PG_PORT
+          valueFrom:
+            secretKeyRef:
+              name: pandoraenvs
+              key: PG_PORT
+        - name: SENHA_MANUAL
+          valueFrom:
+            secretKeyRef:
+              name: pandoraenvs
+              key: SENHA_MANUAL     
+      imagePullSecrets:
+      - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apiradiosnet
+spec:
+  type: LoadBalancer
+  selector:
+    app: apiradiosnet
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 3000

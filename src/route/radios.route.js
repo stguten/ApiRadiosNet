@@ -3,8 +3,8 @@ import { atualizacaoManual, pegarRadioController, todasAsRadiosController } from
 
 const radios = Router();
 
-radios.get("/radio",pegarRadioController);
-radios.get("/allRadios",todasAsRadiosController);
-radios.post("/manualSync",atualizacaoManual);
+radios.get("/radio", pegarRadioController);
+radios.get("/allRadios", todasAsRadiosController);
+radios.post("/manualSync", atualizacaoManual);
 
 export default radios;
