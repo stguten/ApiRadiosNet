@@ -1,6 +1,6 @@
 {
   "name": "apiradionet",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Sistema simples para baixar e salvar as rádios do RadiosNet(radios.com.br)",
   "main": "run.js",
   "type": "module",
