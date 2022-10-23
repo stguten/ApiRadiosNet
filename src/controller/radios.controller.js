@@ -5,10 +5,9 @@ import parsing from "../config/cheerio.config.js";
 import { inserirRadioRepository, pegarRadioComFitroRepository, todasAsRadiosRepository } from "../repository/radios.repository.js";
 
 const pegarRadioController = async (req,res)=>{
-    const {id} = req.query;
-    if(isNaN(id)) {res.send(400).send("Requisição Invalida"); return;};
+    if(Object.keys(req.query).length == 0) {res.status(400).send("Requisição Invalida"); return;};
 
-    await pegarRadioComFitroRepository(id)
+    await pegarRadioComFitroRepository(req.query)
     .then(radio =>{
         if(!radio){
             res.status(404).send("Radio não encontrada");
@@ -36,10 +35,10 @@ const todasAsRadiosController = async (req,res)=>{
 }
 
 const inserirRadioController = async (id) =>{
-    await instance.get(`https://www.radios.com.br/play/${id}`)
-        .then(async result =>{                   
+    await instance.get(`http://play.radios.com.br/${id}`)
+        .then(async result =>{    
             const $ = parsing(result.data);
-            if(result.request.res.responseUrl.indexOf("/error/") > 0) throw new Error('Radio não encontrada.');  
+            if(result.request.res.responseUrl.indexOf("/error/") > 0) throw new Error(`Radio ${id} não encontrada.`);
             switch($("#status-radio > span > b").text().replace(":","")){
                 case 'Arquivada':
                     inserirRadioRepository(await radioBuilder(result.data, id,2));

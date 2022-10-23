@@ -1,6 +1,6 @@
-CREATE SCHEMA IF NOT EXISTS pandora_radio AUTHORIZATION pandora;
+CREATE SCHEMA IF NOT EXISTS radiosnet AUTHORIZATION postgres;
 
-CREATE TABLE IF NOT EXISTS pandora_radio.radios (
+CREATE TABLE IF NOT EXISTS radiosnet.radios (
 	id serial4 NOT NULL,
 	nome text NULL,
 	cidade text NULL,
@@ -9,10 +9,12 @@ CREATE TABLE IF NOT EXISTS pandora_radio.radios (
 	pais text NULL,
 	url text NULL,
 	segmentos _text NULL,
-	CONSTRAINT radios_pk PRIMARY KEY (id)
+	status int4 NULL,
+	CONSTRAINT radios_pk PRIMARY KEY (id),
+	CONSTRAINT radios_un UNIQUE (url)
 );
 
-CREATE TABLE IF NOT EXISTS pandora_radio.logs (
+CREATE TABLE IF NOT EXISTS radiosnet.logs (
 	id bigserial NOT NULL,
 	mensagem text NULL,
 	tipo text NULL,
@@ -20,12 +22,13 @@ CREATE TABLE IF NOT EXISTS pandora_radio.logs (
 	CONSTRAINT logs_pk PRIMARY KEY (id)
 );
 
-CREATE TABLE pandora_radio.status (
+CREATE TABLE IF NOT EXISTS radiosnet.status (
 	id int NOT NULL,
-	descricao text NULL
+	descricao text NULL,
+	CONSTRAINT status_un UNIQUE (id)
 );
 
-INSERT INTO pandora_radio.status (id, descricao) VALUES (1, 'Ativa');
-INSERT INTO pandora_radio.status (id, descricao) VALUES (2, 'Arquivada');
-INSERT INTO pandora_radio.status (id, descricao) VALUES (3, 'Pré-Cadastrada');
-INSERT INTO pandora_radio.status (id, descricao) VALUES (4, 'Desativada');
+INSERT INTO radiosnet.status (id, descricao) VALUES (1, 'Ativa') ON CONFLICT(id) DO NOTHING;
+INSERT INTO radiosnet.status (id, descricao) VALUES (2, 'Arquivada') ON CONFLICT(id) DO NOTHING;
+INSERT INTO radiosnet.status (id, descricao) VALUES (3, 'Pré-Cadastrada') ON CONFLICT(id) DO NOTHING;
+INSERT INTO radiosnet.status (id, descricao) VALUES (4, 'Desativada') ON CONFLICT(id) DO NOTHING;
