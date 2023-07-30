@@ -81,4 +81,4 @@ function criarStatusController(){
     }
 }
 
-export {pegarRadioController,todasAsRadiosController, inserirRadioController, updateRadioController,atualizacaoManual, criarStatusController}
+export {pegarRadioController,todasAsRadiosController, inserirRadioController, atualizacaoManual, criarStatusController}
