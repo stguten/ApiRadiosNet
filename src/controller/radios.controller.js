@@ -2,9 +2,9 @@ import radiosCron from "../../cron/radios.cron.js";
 import radioBuilder from "../builder/radio.builder.js";
 import instance from "../config/axios.config.js";
 import parsing from "../config/cheerio.config.js";
-import { inserirRadioRepository, pegarRadioComFitroRepository, todasAsRadiosRepository } from "../repository/radios.repository.js";
+import { criarStatus, inserirRadioRepository, pegarRadioComFitroRepository, todasAsRadiosRepository } from "../repository/radios.repository.js";
 
-const pegarRadioController = async (req,res)=>{
+async function pegarRadioController(req,res){
     if(Object.keys(req.query).length == 0) {res.status(400).send("Requisição Invalida"); return;};
 
     await pegarRadioComFitroRepository(req.query)
@@ -20,7 +20,7 @@ const pegarRadioController = async (req,res)=>{
     })
 }
 
-const todasAsRadiosController = async (req,res)=>{    
+async function todasAsRadiosController(req,res){    
     await todasAsRadiosRepository()
     .then(radios =>{
         if(!radios){
@@ -34,7 +34,7 @@ const todasAsRadiosController = async (req,res)=>{
     })
 }
 
-const inserirRadioController = async (id) =>{
+async function inserirRadioController(id) {
     await instance.get(`http://play.radios.com.br/${id}`)
         .then(async result =>{    
             const $ = parsing(result.data);
@@ -59,11 +59,7 @@ const inserirRadioController = async (id) =>{
         });
 }
 
-const updateRadioController = async (req, res) =>{
-
-}
-
-const atualizacaoManual = async(req,res)=>{
+async function atualizacaoManual(req,res){
     const {pass} = req.body;
 
     if(pass == process.env.SENHA_MANUAL){
@@ -72,4 +68,17 @@ const atualizacaoManual = async(req,res)=>{
     }
 }
 
-export {pegarRadioController,todasAsRadiosController, inserirRadioController, updateRadioController,atualizacaoManual}
+function criarStatusController(){
+    try{
+        criarStatus(1, 'Ativa');
+        criarStatus(2, 'Arquivada');
+        criarStatus(3, 'Pré-Cadastrada');
+        criarStatus(4, 'Desativada');        
+    }
+    catch(error){
+        console.log("Falha ao criar as entradas de status");
+        console.log(error);
+    }
+}
+
+export {pegarRadioController,todasAsRadiosController, inserirRadioController, updateRadioController,atualizacaoManual, criarStatusController}
