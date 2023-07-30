@@ -1,57 +1,114 @@
-import pool from "../config/pg.config.js";
-import {readFileSync} from 'fs';
+import prisma from "../config/prisma.config.js";
 
-async function pegarRadioComFitroRepository(parametros){
-    const {nome, cidade, estado, pais} = parametros;
-     try{
-        const resultado = await pool.query(`SELECT nome, cidade, estado, regiao, pais, url, segmentos FROM pandora_radio.radios WHERE 1=1 
-        ${nome != undefined ? `and nome ILIKE '%${nome}%' `: ``} 
-        ${cidade != undefined ? `and cidade ILIKE '%${cidade}%' ` : ``} 
-        ${estado != undefined ? `and estado ILIKE '%${estado}%' ` : ``} 
-        ${pais != undefined ? `and pais ILIKE '%${pais}%' ` : ``} `);
-        return resultado.rows;
-    }catch(e){
-        return e;
-    } 
+async function pegarRadioComFitroRepository(parametros) {
+  console.log(parametros);
+  const { nome, cidade, estado, pais } = parametros;
+  try {
+    const radios = await prisma.radio.findMany({
+      select: {
+        nome: true,
+        cidade: true,
+        estado: true,
+        regiao: true,
+        pais: true,
+        url: true,
+        segmentos: true,
+      },
+      where: {
+        nome: nome
+          ? {
+              contains: nome,
+            }
+          : undefined,
+        cidade: cidade
+          ? {
+              contains: cidade,
+            }
+          : undefined,
+        estado: estado
+          ? {
+              contains: estado,
+            }
+          : undefined,
+        pais: pais
+          ? {
+              contains: pais,
+            }
+          : undefined,
+      },
+    });
+
+    return radios;
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
 }
 
-async function todasAsRadiosRepository(){
-    try{
-        const resultado = await pool.query('SELECT nome, url, cidade, estado, regiao, pais, segmentos FROM pandora_radio.radios');
-        return resultado.rows;
-    }catch(e){
-        throw e;
+async function todasAsRadiosRepository() {
+  try {
+    const radios = await prisma.radio.findMany({
+      select: {
+        nome: true,
+        url: true,
+        cidade: true,
+        estado: true,
+        regiao: true,
+        pais: true,
+        segmentos: true,
+      },
+    });
+
+    return radios;
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+async function inserirRadioRepository(dados) {
+  const { radio, segmentos, cidade, estado, regiao, pais, url, status } = dados;
+  try {
+    const existingRadio = await prisma.radio.findFirst({
+      where: { url: url },
+    });
+
+    if (!existingRadio) {
+      await prisma.radio.create({
+        data: {
+          nome: radio,
+          cidade: cidade,
+          estado: estado,
+          regiao: regiao,
+          pais: pais,
+          url: url,
+          segmentos: segmentos.toString(),
+          status: status,
+        },
+      });
     }
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-async function inserirRadioRepository(dados){
-    const {radio, segmentos, cidade, estado, regiao, pais, url,status} = dados;
-    const client = await pool.connect();
-    try{
-        await client.query('BEGIN');
-        await client.query(`INSERT INTO pandora_radio.radios(nome, cidade, estado, regiao, pais, url, segmentos,status) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT(url) DO NOTHING`, [radio, cidade, estado, regiao, pais, url, segmentos,status]);
-        await client.query('COMMIT');
-        client.release();
-    }catch(e){
-        await client.query('ROLLBACK');
-        throw e;
+async function criarStatus(id, descricao) {
+  try {
+    const existingStatus = await prisma.status.findUnique({
+      where: { id: id },
+    });
+
+    if (!existingStatus) {
+      await prisma.status.create({
+        data: {
+          id: id,
+          descricao: descricao,
+        },
+      });
     }
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-async function criarDatabase (){
-    const client = await pool.connect(); 
-    try{
-        const sql = readFileSync('./src/sql/db.sql','utf8');
-        await client.query('BEGIN');
-        await client.query(sql);
-        await client.query('COMMIT');
-    }catch(err){
-        await client.query('ROLLBACK');
-        throw err;
-    }finally{
-        client.release();
-    }
-}
-
-export {pegarRadioComFitroRepository, todasAsRadiosRepository, inserirRadioRepository, criarDatabase}
+export { pegarRadioComFitroRepository, todasAsRadiosRepository, inserirRadioRepository, criarStatus };
