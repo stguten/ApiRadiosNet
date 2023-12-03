@@ -43,17 +43,16 @@ async function pegarRadioPorCategoriacController(req,res){
 }
 
 async function todasAsRadiosController(req,res){    
-    await todasAsRadiosRepository()
-    .then(radios =>{
+    try {
+        const radios = await todasAsRadiosRepository();
         if(!radios){
-            res.status(503).send("VAZIO");
+            res.status(503).send("Nenhuma radio encontrada.");
             return;
         }
         res.status(200).send(radios);
-    })
-    .catch(e =>{
-        res.status(500).send(e);
-    })
+    } catch (error) {
+        res.status(500).send(e);        
+    }
 }
 
 async function inserirRadioController(radioId) {
