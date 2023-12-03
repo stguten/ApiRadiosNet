@@ -1,114 +1,81 @@
-import prisma from "../config/prisma.config.js";
+import database from "../config/sqlite.config.js";
+import * as fs from "fs";
 
-async function pegarRadioComFitroRepository(parametros) {
-  console.log(parametros);
-  const { nome, cidade, estado, pais } = parametros;
-  try {
-    const radios = await prisma.radio.findMany({
-      select: {
-        nome: true,
-        cidade: true,
-        estado: true,
-        regiao: true,
-        pais: true,
-        url: true,
-        segmentos: true,
-      },
-      where: {
-        nome: nome
-          ? {
-              contains: nome,
+async function pegarRadioRepository(radioId){
+    const id = parseInt(radioId);
+    console.log(radioId);
+    return new Promise((resolve, reject) =>{
+        database.get("SELECT DISTINCT nome, cidade, estado, "+
+            "regiao, pais, url as link, segmentos as categorias, "+
+            "descricao as status "+
+            "FROM radios r "+
+            "JOIN status s ON r.status = s.id "+
+            "WHERE r.id = ?", [id], (err, row)=>{
+                if(err) throw err;
+                if(row == undefined) resolve(false);
+                resolve(row);
             }
-          : undefined,
-        cidade: cidade
-          ? {
-              contains: cidade,
-            }
-          : undefined,
-        estado: estado
-          ? {
-              contains: estado,
-            }
-          : undefined,
-        pais: pais
-          ? {
-              contains: pais,
-            }
-          : undefined,
-      },
-    });
-
-    return radios;
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
+        )
+    })
 }
 
-async function todasAsRadiosRepository() {
-  try {
-    const radios = await prisma.radio.findMany({
-      select: {
-        nome: true,
-        url: true,
-        cidade: true,
-        estado: true,
-        regiao: true,
-        pais: true,
-        segmentos: true,
-      },
-    });
-
-    return radios;
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
+async function pegarRadioPorCategoriaRepository(categoria) {
+  return new Promise((resolve, reject) => {
+    database.all(
+      "SELECT DISTINCT nome, cidade, estado, " +
+        "regiao, pais, url as link, segmentos as categorias, " +
+        "descricao as status " +
+        "FROM radios r " +
+        "JOIN status s ON r.status = s.id " +
+        "WHERE r.segmentos LIKE ?",
+      ["%" + categoria + "%"],
+      (err, row) => {
+        if (err) throw err;
+        if (row == undefined) resolve(false);
+        resolve(row);
+      }
+    );
+  });
 }
 
-async function inserirRadioRepository(dados) {
-  const { radio, segmentos, cidade, estado, regiao, pais, url, status } = dados;
-  try {
-    const existingRadio = await prisma.radio.findFirst({
-      where: { url: url },
-    });
+async function todasAsRadiosRepository(){
+    return new Promise((resolve, reject) =>{
+        database.all("SELECT DISTINCT nome, cidade, estado, "+
+        "regiao, pais, url as link, segmentos as categorias, "+
+        "descricao as status "+
+        "FROM radio r "+
+        "JOIN status s ON r.status = s.id ", (err, row)=>{
+                if(err) throw err;
+                if(row === undefined) resolve(false);
+                resolve(row);
+            }
+        )
+    })    
+}
 
-    if (!existingRadio) {
-      await prisma.radio.create({
-        data: {
-          nome: radio,
-          cidade: cidade,
-          estado: estado,
-          regiao: regiao,
-          pais: pais,
-          url: url,
-          segmentos: segmentos.toString(),
-          status: status,
-        },
-      });
+async function inserirRadioRepository(radio){
+     database.serialize(()=>{
+        try{
+            database.run("BEGIN");
+            database.run("INSERT OR IGNORE INTO radios (nome,cidade,estado,regiao, pais, url, segmentos, status) VALUES (?,?,?,?,?,?,?,?)", 
+                [radio.nome, radio.cidade, radio.estado, radio.regiao, radio.pais, radio.url, radio.segmentos.toString(), radio.status]);
+            database.run("COMMIT");
+        }catch(e){
+            database.run("ROLLBACK");
+            console.log(e);
+            return new Error("Erro ao inserir radio");
+        }
+    }); 
+}
+
+async function criarTabelas(){
+    try{
+        const sql = fs.readFileSync('./src/sql/db.sql','utf8') ;
+        database.exec(sql);
+        console.log('Tabelas criadas com sucesso!');
+    } catch (err) {
+        console.error(err);
     }
-  } catch (error) {
-    console.error(error);
-  }
 }
 
-async function criarStatus(id, descricao) {
-  try {
-    const existingStatus = await prisma.status.findUnique({
-      where: { id: id },
-    });
-
-    if (!existingStatus) {
-      await prisma.status.create({
-        data: {
-          id: id,
-          descricao: descricao,
-        },
-      });
-    }
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-export { pegarRadioComFitroRepository, todasAsRadiosRepository, inserirRadioRepository, criarStatus };
+export {pegarRadioRepository, todasAsRadiosRepository, inserirRadioRepository, pegarRadioPorCategoriaRepository, criarTabelas}
