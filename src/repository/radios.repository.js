@@ -43,7 +43,7 @@ async function todasAsRadiosRepository(){
         database.all("SELECT DISTINCT nome, cidade, estado, "+
         "regiao, pais, url as link, segmentos as categorias, "+
         "descricao as status "+
-        "FROM radio r "+
+        "FROM radios r "+
         "JOIN status s ON r.status = s.id ", (err, row)=>{
                 if(err) throw err;
                 if(row === undefined) resolve(false);
