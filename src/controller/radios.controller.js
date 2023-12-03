@@ -1,23 +1,45 @@
-import radiosCron from "../../cron/radios.cron.js";
+import { radiosCron } from "../../cron/radios.cron.js";
 import radioBuilder from "../builder/radio.builder.js";
 import instance from "../config/axios.config.js";
 import parsing from "../config/cheerio.config.js";
-import { criarStatus, inserirRadioRepository, pegarRadioComFitroRepository, todasAsRadiosRepository } from "../repository/radios.repository.js";
+import { inserirRadioRepository, pegarRadioRepository, todasAsRadiosRepository } from "../repository/radios.repository.js";
 
 async function pegarRadioController(req,res){
-    if(Object.keys(req.query).length == 0) {res.status(400).send("Requisição Invalida"); return;};
+    if(Object.keys(req.query).length == 0 || req.query.id == undefined || req.query.id == null || req.query.id == "" || isNaN(req.query.id)) {
+        res.status(400).send("Requisição Invalida"); 
+        return;
+    };
 
-    await pegarRadioComFitroRepository(req.query)
-    .then(radio =>{
+    try {
+        const radio = await pegarRadioRepository(req.query.id);
+        Object.assign(radio, {categorias: radio.categorias.split(",")});
+
         if(!radio){
             res.status(404).send("Radio não encontrada");
             return;
         }
         res.status(200).send(radio);
-    })
-    .catch(e =>{
-        res.status(500).send(e);
-    })
+    } catch (error) {
+        res.status(500).send(e);        
+    }
+}
+
+async function pegarRadioPorCategoriacController(req,res){
+    if(Object.keys(req.param).length == 0 || req.param.categoria == undefined || req.param.categoria == null || req.param.categoria == "") {
+        res.status(400).send("Requisição Invalida"); 
+        return;
+    };
+
+    try {
+        const radios = await pegarRadioPorCategoriaRepository(req.param.categoria);
+        if(!radios){
+            res.status(404).send("Radio não encontrada");
+            return;
+        }
+        res.status(200).send(radios);
+    } catch (error) {
+        res.status(500).send(e);        
+    }
 }
 
 async function todasAsRadiosController(req,res){    
@@ -34,51 +56,41 @@ async function todasAsRadiosController(req,res){
     })
 }
 
-async function inserirRadioController(id) {
-    await instance.get(`http://play.radios.com.br/${id}`)
-        .then(async result =>{    
-            const $ = parsing(result.data);
-            if(result.request.res.responseUrl.indexOf("/error/") > 0) throw new Error(`Radio ${id} não encontrada.`);
-            switch($("#status-radio > span > b").text().replace(":","")){
-                case 'Arquivada':
-                    inserirRadioRepository(await radioBuilder(result.data, id,2));
-                    break;
-                case 'Pré-cadastrada':
-                    inserirRadioRepository(await radioBuilder(result.data, id,3));
-                    break;
-                case 'Desativada':
-                    inserirRadioRepository(await radioBuilder(result.data, id,4));
-                    break;
-                default:
-                    inserirRadioRepository(await radioBuilder(result.data, id,1));
-                    break;
-            } 
-        })
-        .catch(e =>{
-            throw e;
-        });
+async function inserirRadioController(radioId) {
+    const htmlcode = await instance.get(`http://play.radios.com.br/${radioId}`);
+
+    try {
+        const $ = parsing(htmlcode.data);
+        if(htmlcode.request.res.responseUrl.indexOf("/error/") > 0) throw new Error(`Radio ${radioId} não encontrada.`);     
+        switch($("#status-radio > span > b").text().replace(":","")){
+            case 'Arquivada':
+                inserirRadioRepository(await radioBuilder(htmlcode.data, radioId, 2));
+                break;
+            case 'Pré-cadastrada':
+                inserirRadioRepository(await radioBuilder(htmlcode.data, radioId, 3));
+                break;
+            case 'Desativada':
+                inserirRadioRepository(await radioBuilder(htmlcode.data, radioId, 4));
+                break;
+            default:
+                inserirRadioRepository(await radioBuilder(htmlcode.data, radioId, 1));
+                break;
+        } 
+    } catch (error) {
+        throw new Error(error);
+    }
 }
 
 async function atualizacaoManual(req,res){
-    const {pass} = req.body;
+    const password = req.body.pass;
 
-    if(pass == process.env.SENHA_MANUAL){
-        radiosCron();
-        res.status(200).send("Atulização manual iniciada")
+    if(password == undefined || password == null || password == "" || password != process.env.SENHA_MANUAL){
+        res.status(401).send("Senha invalida");
+        return;
     }
+
+    radiosCron();
+    res.status(200).send("Atualização manual concluida");
 }
 
-function criarStatusController(){
-    try{
-        criarStatus(1, 'Ativa');
-        criarStatus(2, 'Arquivada');
-        criarStatus(3, 'Pré-Cadastrada');
-        criarStatus(4, 'Desativada');        
-    }
-    catch(error){
-        console.log("Falha ao criar as entradas de status");
-        console.log(error);
-    }
-}
-
-export {pegarRadioController,todasAsRadiosController, inserirRadioController, atualizacaoManual, criarStatusController}
+export {pegarRadioController,todasAsRadiosController, inserirRadioController, atualizacaoManual, pegarRadioPorCategoriacController}
